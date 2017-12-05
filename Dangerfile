@@ -29,8 +29,8 @@ def get_junit_results()
 		}
 
 		doc = Nokogiri::XML(open(jfile), nil, Encoding::UTF_8.to_s)
-		doc.xpath('//testcase/failure').each do |failure|
 
+		doc.xpath('//testcase/failure').each do |failure|
 			modules[module_name][:failures] << {
 				name: failure.parent['name'],
 				class_name: failure.parent['classname'],
@@ -41,23 +41,31 @@ def get_junit_results()
 
 	end
 
+	printable_message = print(modules)
+	if(printable_message.empty?) 
+		message "Danger did not find any errors"
+	else
+		fail printable_message
+	end
 
-	print(modules)
 end
 
 def print(modules) 
 	output_string = ""
-	
-	modules.each do |name, item|
-		output_string += "### Found failing tests in Module #{item[:name]}: \n"
 
-		item[:failures].each_with_index do |failure, i|
-			output_string += "\n#{i + 1}. __#{failure[:name]} (#{failure[:time]}s)__ \n`#{failure[:message]}`\n"
+	modules.each do |name, item|
+		unless (item[:failures].empty?)
+
+			output_string += "### Found failing tests in Module #{item[:name]}: \n"
+
+			item[:failures].each_with_index do |failure, i|
+				output_string += "\n#{i + 1}. __#{failure[:name]} (#{failure[:time]}s)__ \n`#{failure[:message]}`\n"
+			end
 		end
 	end
 
-	fail output_string 
+	return output_string
+
 end
 
 get_junit_results()
-
